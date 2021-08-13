@@ -81,9 +81,7 @@ cat: standard output: No such file or directory
 make: *** [package/pkg-generic.mk:260: /mnt/f/ESlab/buildroot/output/build/host-libffi-3.4.2/.stamp_configured] Error 1
 ```
 
-由于问题难以解决，尝试使用新安装的Linux系统，并进行对比。
-
-我们进行了如下两个项目作为对比：
+由于问题难以解决，尝试使用新安装的Linux系统，并进行对比。我们进行了如下两个项目作为对比：
 
 一个是在Linux Ubuntu系统的计算机上直接进行操作，排除方法本身的问题。启动命令如下：
 ```shell
@@ -98,10 +96,15 @@ qemu-system-arm -M versatilepb -kernel output/images/zImage -dtb output/images/v
 
 ![image-20210813144739650](assets/image-20210813144739650.png)
 
+经过对比，随后在本地分支的重新clone buildroot库后进行make，确定了问题在于事先手动装入了不恰当版本的linux.tar文件，而同操作方案、WSL的系统资源分配等无关。
 
+得到的arm linux系统镜像存入`1_qemu`中。其中，zImage为内核，vexpress-v2p-ca9.dtb为设备树，rootfs.ext2为文件系统。
+
+进入`1_qemu/`，输入`sh start-qemu.sh`即可在虚拟arm硬件开发板运行arm-linux。
 
 ### 参考
 
 - https://zh.wikipedia.org/zh-cn/QEMU
 - https://zh.wikipedia.org/zh-cn/Buildroot
 - https://zhuanlan.zhihu.com/p/340362172
+- https://www.cnblogs.com/arnoldlu/p/9689585.html
