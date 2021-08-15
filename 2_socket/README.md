@@ -148,7 +148,7 @@ clean:
 
 ![image-20210814130550821](assets/image-20210814130550821.png)
 
-
+当然，我们也可以直接将原有的helloworld文件重新编写，make clean之后重新make即可。
 
 ## 参考
 
