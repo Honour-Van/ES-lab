@@ -17,11 +17,12 @@
 
 
 
+按照已有的一些资料的说法（比如https://zhuanlan.zhihu.com/p/350947593），我们首先将default-config文件中的CONFIG_EDU打开。
+
 ```shell
 sudo find ~/ -name default-configs -type d
 /home/fhn/eslab/buildroot/output/build/host-qemu-6.0.0/default-configs
 ```
-
 
 ```shell
 qemu-system-arm \
@@ -35,11 +36,15 @@ qemu-system-arm \
 
 ```
 
-失败。
+失败，配置并不是这么简单的。
 
+> 事后思考：这里忽略了两个要点：
+> 1. 没有考虑到不同板子之间的差异
+> 2. 强行寻找一个qemu的配置文件
 
+**一些思考**：
 
-**一些猜测**：
+在完成
 
 1. 料想问题出现在没有对PCI设备这个性质进行足够的关注：
    1. https://qemu.readthedocs.io/en/latest/system/device-emulation.html?highlight=pci
@@ -49,15 +54,22 @@ qemu-system-arm \
 
 
 
-linux下的查找命令效率很高
+
+## 向virt板中自定义添加device
+按照milokim给出的示例先复现：
+1. 安装qemu时出错：https://blog.csdn.net/qq_36393978/article/details/118086216
+
+## 了解PCI device添加方式
+
+暂时可以参考的是下面这一篇：https://github.com/levex/kernel-qemu-pci
+
+
+## 一些杂项
+
+linux下的查找命令效率很高，比如查找hw为名的目录，其中和qemu相关的部分如下：
 
 ```shell
-find . -name hw -type d
-```
-
-得到和qemu相关的部分如下：
-
-```
+$ find . -name hw -type d
 ./output/build/host-qemu-6.0.0/include/hw
 ./output/build/host-qemu-6.0.0/include/standard-headers/drivers/infiniband/hw
 ./output/build/host-qemu-6.0.0/roms/skiboot/hw
@@ -66,10 +78,3 @@ find . -name hw -type d
 ./output/build/host-qemu-6.0.0/hw
 ./output/build/host-qemu-6.0.0/build/hw
 ```
-
-## 向virt板中自定义添加device
-按照milokim给出的示例先复现：
-1. 安装qemu时出错：https://blog.csdn.net/qq_36393978/article/details/118086216
-
-## 了解PCI device添加方式
-
