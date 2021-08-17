@@ -3,6 +3,7 @@
 1. 为 qemu 中的 edu 设备编写 PCI 设备驱动程序，基本要求是读出设备的版本号即可。
 2. 如果对更多的驱动功能感兴趣也可以支持更多的功能（中断/DMA等）（edu 设备的 ARM 版我没有测试过，也可能行不通）
             
+
 1'. （简化版）编写一个可以存储少量数据的驱动，通过字符设备接口进行读写。
 
 报告要求：
@@ -13,6 +14,8 @@
 1. qemu 的源代码，主要看看里面的 docs/specs/edu.txt
 2. Linux Device Driver 第三版
 3. 网络资源
+
+
 
 ```shell
 sudo find ~/ -name default-configs -type d
@@ -36,6 +39,37 @@ qemu-system-arm \
 
 
 
-料想问题出现在没有对PCI设备这个性质进行足够的关注。
+**一些猜测**：
 
-https://qemu.readthedocs.io/en/latest/system/device-emulation.html?highlight=pci
+1. 料想问题出现在没有对PCI设备这个性质进行足够的关注：
+   1. https://qemu.readthedocs.io/en/latest/system/device-emulation.html?highlight=pci
+   2. https://qemu.readthedocs.io/en/latest/system/target-arm.html?highlight=pci
+2. 不应该拘泥于已有的教程，因为重构之后，不能确定这个*不太重要*的edu在哪里。最新版本中，整个repo只有一个与edu相关的代码文件，这已经是PCI的驱动程序了，我们所需做的，是仿照misc平台下的这个驱动在arm vexpress/versatilepd中实现。![image-20210816211400313](assets/image-20210816211400313.png)
+3. 仍应该寻找一个相对好的教程先熟悉自定义device的问题：https://milokim.gitbooks.io/lbb/content/qemu-how-to-design-a-prototype-device.html
+
+
+
+linux下的查找命令效率很高
+
+```shell
+find . -name hw -type d
+```
+
+得到和qemu相关的部分如下：
+
+```
+./output/build/host-qemu-6.0.0/include/hw
+./output/build/host-qemu-6.0.0/include/standard-headers/drivers/infiniband/hw
+./output/build/host-qemu-6.0.0/roms/skiboot/hw
+./output/build/host-qemu-6.0.0/roms/seabios/src/hw
+./output/build/host-qemu-6.0.0/roms/seabios-hppa/src/hw
+./output/build/host-qemu-6.0.0/hw
+./output/build/host-qemu-6.0.0/build/hw
+```
+
+## 向virt板中自定义添加device
+按照milokim给出的示例先复现：
+1. 安装qemu时出错：https://blog.csdn.net/qq_36393978/article/details/118086216
+
+## 了解PCI device添加方式
+
