@@ -1,0 +1,2 @@
+3_driver/rootfs.ext4 filter=lfs diff=lfs merge=lfs -text
+3_driver/qemu-system-aarch64 filter=lfs diff=lfs merge=lfs -text
