@@ -57,11 +57,19 @@ qemu-system-arm \
 
 ## 向virt板中自定义添加device
 按照milokim给出的示例先复现：
-1. 安装qemu时出错：https://blog.csdn.net/qq_36393978/article/details/118086216
+
+安装qemu时出错：https://blog.csdn.net/qq_36393978/article/details/118086216
+
 
 ## 了解PCI device添加方式
 
 暂时可以参考的是下面这一篇：https://github.com/levex/kernel-qemu-pci
+
+另外直接找到添加edu的方法，注意文件结构已经改过，在qemu/configs/devices/aarch64-softmmu/default.mk中添加CONFIG_EDU=y，随后重新编译
+
+## PCI驱动相关
+
+了解lspci和setpci等常见pci utils
 
 
 ## 一些杂项
@@ -78,3 +86,40 @@ $ find . -name hw -type d
 ./output/build/host-qemu-6.0.0/hw
 ./output/build/host-qemu-6.0.0/build/hw
 ```
+
+
+
+8月18日方案：重新按照**aarch64**对环境进行重新配置。
+1. 安装buildroot并按照arm64-virt进行硬件配置
+2. 下载qemu，并在aarch64环境下进行configure+make
+3. 寻找在arm64平台下安装驱动的方法，安装aarch64-linux-gnu-gcc-10并重命名
+
+
+$ git clone git://git.qemu.org/qemu.git
+$ cd qemu
+$ ./configure --target-list=aarch64-softmmu
+$ make
+
+git clone git@github.com:buildroot/buildroot.git
+$ cd buildroot
+$ make qemu_aarch64_virt_defconfig
+$ make
+
+
+将内核驱动放入文件系统可以在两个阶段完成，分别是buildroot make之前和之后，之前就对应着向buildroot package中添加相关信息，随后一次烧制，方法如下：
+https://buildroot.org/downloads/manual/manual.html#_infrastructure_for_packages_building_kernel_modules
+
+也可以使用更加方便的交叉编译方法。
+
+运行脚本./run_aarch64.sh
+
+```shell
+# lspci
+00:01.0 Class 00ff: 1234:11e8
+00:00.0 Class 0600: 1b36:0008
+# insmod hello.ko 
+ book name:dissecting Linux Device Driver
+ book num:4000
+```
+
+
