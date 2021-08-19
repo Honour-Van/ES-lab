@@ -1,4 +1,7 @@
-## lab3 编写 Linux 驱动程序
+# lab3 编写 Linux 驱动程序
+
+lab3：编写Linux驱动程序
+
 要求：
 1. 为 qemu 中的 edu 设备编写 PCI 设备驱动程序，基本要求是读出设备的版本号即可。
 2. 如果对更多的驱动功能感兴趣也可以支持更多的功能（中断/DMA等）（edu 设备的 ARM 版我没有测试过，也可能行不通）
@@ -15,7 +18,134 @@
 2. Linux Device Driver 第三版
 3. 网络资源
 
+## 安装
 
+>clone整个仓库之后，`3_driver`中的脚本并不能像之前的1和2之前一样快速启动运行。要启用edu设备，需要重新配置一个qemu来替换`3_driver/qemu-system-aarch64/`.
+
+安装qemu必要的依赖包：
+```shell
+sudo apt install ninja-build libglib2.0-dev
+```
+随后在eslab目录下clone qemu仓库，如子模块的结构。（TODO：调整子模块，使得整个项目clone下来时可以递归安装子模块git库）
+```shell
+git clone git://git.qemu.org/qemu.git
+cd qemu
+```
+
+在编译之前要启用edu设备，在qemu-4.2.1中，相关配置在`qemu/configs/devices/aarch64-softmmu/default.mak`中，
+
+在其中添加CONFIG_EDU=y，随后make
+
+```shell
+./configure --target-list=aarch64-softmmu
+make
+```
+
+在build中可以找到我们所需的`qemu-system-aarch64`
+```shell
+$ find . -name qemu-system-aarch64 -print
+./build/aarch64-softmmu/qemu-system-aarch64
+./build/qemu-system-aarch64
+```
+
+将上述find得到的qemu-system-aarch64其一（两者是一样的）复制到3_driver中，随后运行：
+```shell
+sudo sh ./run_aarch64.sh
+root
+```
+
+将已经编译好的驱动模块edu.ko加入即可：
+```shell
+# insmod edu.ko 
+lkmc_pci 0000:00:01.0: pci_probe
+lkmc_pci 0000:00:01.0: enabling device (0000 -> 0002)
+EDU device version: 10000ed
+length 100000
+config 0 34
+config 1 12
+config 2 e8
+config 3 11
+config 4 2
+config 5 0
+config 6 10
+config 7 0
+config 8 10
+config 9 0
+config a ff
+config b 0
+config c 0
+config d 0
+config e 0
+config f 0
+config 10 0
+config 11 0
+config 12 0
+config 13 10
+config 14 0
+config 15 0
+config 16 0
+config 17 0
+config 18 0
+config 19 0
+config 1a 0
+config 1b 0
+config 1c 0
+config 1d 0
+config 1e 0
+config 1f 0
+config 20 0
+config 21 0
+config 22 0
+config 23 0
+config 24 0
+config 25 0
+config 26 0
+config 27 0
+config 28 0
+config 29 0
+config 2a 0
+config 2b 0
+config 2c f4
+config 2d 1a
+config 2e 0
+config 2f 11
+config 30 0
+config 31 0
+config 32 0
+config 33 0
+config 34 40
+config 35 0
+config 36 0
+config 37 0
+config 38 0
+config 39 0
+config 3a 0
+config 3b 0
+config 3c 31
+config 3d 1
+config 3e 0
+config 3f 0
+dev->irq 31
+io 0 10000ed
+io 4 0
+io 8 0
+io c ffffffff
+io 10 ffffffff
+io 14 ffffffff
+io 18 ffffffff
+io 1c ffffffff
+io 20 0
+io 24 0
+lkmc_pci 0000:00:01.0: vaddr_from = ffffff804168e000
+lkmc_pci 0000:00:01.0: dma_handle_from = 8168e000
+lkmc_pci 0000:00:01.0: vaddr_to = ffffff804166c000
+lkmc_pci 0000:00:01.0: dma_handle_to = 8166c000
+# EDU: clamping DMA 0x000000008168e000 to 0x000000000168e000!
+irq_handler irq = 49 dev = 250 irq_status = 100
+```
+
+
+## lab日志
 
 按照已有的一些资料的说法（比如https://zhuanlan.zhihu.com/p/350947593），我们首先将default-config文件中的CONFIG_EDU打开。
 
@@ -123,94 +253,6 @@ https://buildroot.org/downloads/manual/manual.html#_infrastructure_for_packages_
 ```
 
 
-```c
-# insmod edu.ko 
-lkmc_pci 0000:00:01.0: pci_probe
-lkmc_pci 0000:00:01.0: enabling device (0000 -> 0002)
-EDU device version: 10000ed
-length 100000
-config 0 34
-config 1 12
-config 2 e8
-config 3 11
-config 4 2
-config 5 0
-config 6 10
-config 7 0
-config 8 10
-config 9 0
-config a ff
-config b 0
-config c 0
-config d 0
-config e 0
-config f 0
-config 10 0
-config 11 0
-config 12 0
-config 13 10
-config 14 0
-config 15 0
-config 16 0
-config 17 0
-config 18 0
-config 19 0
-config 1a 0
-config 1b 0
-config 1c 0
-config 1d 0
-config 1e 0
-config 1f 0
-config 20 0
-config 21 0
-config 22 0
-config 23 0
-config 24 0
-config 25 0
-config 26 0
-config 27 0
-config 28 0
-config 29 0
-config 2a 0
-config 2b 0
-config 2c f4
-config 2d 1a
-config 2e 0
-config 2f 11
-config 30 0
-config 31 0
-config 32 0
-config 33 0
-config 34 40
-config 35 0
-config 36 0
-config 37 0
-config 38 0
-config 39 0
-config 3a 0
-config 3b 0
-config 3c 31
-config 3d 1
-config 3e 0
-config 3f 0
-dev->irq 31
-io 0 10000ed
-io 4 0
-io 8 0
-io c ffffffff
-io 10 ffffffff
-io 14 ffffffff
-io 18 ffffffff
-io 1c ffffffff
-io 20 0
-io 24 0
-lkmc_pci 0000:00:01.0: vaddr_from = ffffff804168e000
-lkmc_pci 0000:00:01.0: dma_handle_from = 8168e000
-lkmc_pci 0000:00:01.0: vaddr_to = ffffff804166c000
-lkmc_pci 0000:00:01.0: dma_handle_to = 8166c000
-# EDU: clamping DMA 0x000000008168e000 to 0x000000000168e000!
-irq_handler irq = 49 dev = 250 irq_status = 100
-```
 
 注意，mmio的前80个字节只能以4 byte为单位读入，比如读取版本号时，不能读取逐个byte读取。
 ```c
