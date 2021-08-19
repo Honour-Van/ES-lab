@@ -48,7 +48,8 @@ $ find . -name qemu-system-aarch64 -print
 ./build/qemu-system-aarch64
 ```
 
-将上述find得到的qemu-system-aarch64其一（两者是一样的）复制到3_driver中，随后运行：
+~~将上述find得到的qemu-system-aarch64其一（两者是一样的）复制到3_driver中，随后运行：~~
+>经过已有的测试发现，这样做并不可行，建议查看“整理之后开始尝试”部分，从buildroot开始进行完成的编译。
 ```shell
 sudo sh ./run_aarch64.sh
 root
@@ -282,7 +283,7 @@ find ~/eslab/buildroot-edu/ -name linux-5.10.7 -type d
 
 并将上述设为LINUX_KERNEL_DIR变量，方便说明。
 
-在$LINUX_KERNEL_DIR/drivers/char/中添加hello.c作为测试驱动。随后回到LINUX_KERNEL_DIR执行交叉编译：
+在$LINUX_KERNEL_DIR/drivers/char/中添加hello.c作为测试驱动，并在char/下的Makefile添加相应的make选项`obj-m += hello.o`。随后回到LINUX_KERNEL_DIR执行交叉编译：
 
 ```shell
 sudo make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules
