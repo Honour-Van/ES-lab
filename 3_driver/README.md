@@ -183,26 +183,33 @@ qemu-system-arm \
 3. 仍应该寻找一个相对好的教程先熟悉自定义device的问题：https://milokim.gitbooks.io/lbb/content/qemu-how-to-design-a-prototype-device.html
 
 
+随后做了相关的了解和调研：
 
-
-## 向virt板中自定义添加device
+### 向virt板中自定义添加device
 按照milokim给出的示例先复现：
 
 安装qemu时出错：https://blog.csdn.net/qq_36393978/article/details/118086216
 
+可以尝试安装以下依赖：
+```
+sudo apt-get install build-essential zlib1g-dev pkg-config libglib2.0-dev 
+binutils-dev libboost-all-dev autoconf libtool libssl-dev ninja-build
+libpixman-1-dev libpython-dev python-pip python-capstone virtualenv
+```
 
-## 了解PCI device添加方式
+### 了解PCI device添加方式
 
 暂时可以参考的是下面这一篇：https://github.com/levex/kernel-qemu-pci
 
 另外直接找到添加edu的方法，注意文件结构已经改过，在qemu/configs/devices/aarch64-softmmu/default.mk中添加CONFIG_EDU=y，随后重新编译
 
-## PCI驱动相关
+### PCI驱动相关
 
-了解lspci和setpci等常见pci utils
+了解lspci和setpci等常见pci utils。
 
+最终确定导入方式是交叉编译，挂载文件系统之后复制到root/
 
-## 一些杂项
+### 一些杂项
 
 linux下的查找命令效率很高，比如查找hw为名的目录，其中和qemu相关的部分如下：
 
@@ -217,14 +224,15 @@ $ find . -name hw -type d
 ./output/build/host-qemu-6.0.0/build/hw
 ```
 
-
+### 整理之后重新开始尝试
 
 8月18日方案：重新按照**aarch64**对环境进行重新配置。
 1. 安装buildroot并按照arm64-virt进行硬件配置
 2. 下载qemu，并在aarch64环境下进行configure+make
-3. 寻找在arm64平台下安装驱动的方法，安装aarch64-linux-gnu-gcc-10并重命名
+3. 寻找在arm64平台下安装驱动的方法，安装aarch64-linux-gnu-gcc-10并添加链接
 
 
+```shell
 $ git clone git://git.qemu.org/qemu.git
 $ cd qemu
 $ ./configure --target-list=aarch64-softmmu
@@ -234,24 +242,68 @@ git clone git@github.com:buildroot/buildroot.git
 $ cd buildroot
 $ make qemu_aarch64_virt_defconfig
 $ make
+```
+
+这时启动es-lab/run_aarch64.sh：
+```shell
+#!/bin/bash
+./qemu/build/aarch64-softmmu/qemu-system-aarch64 -M virt -cpu cortex-a57 \
+-nographic -smp 1 -m 2048 \
+-kernel ./buildroot-edu/output/images/Image \
+--append "rootwait root=/dev/vda console=ttyAMA0" \
+-netdev user,id=eth0 -device virtio-net-device,netdev=eth0 \
+-drive file=./buildroot-edu/output/images/rootfs.ext4,if=none,format=raw,id=hd0 \
+-device virtio-blk-device,drive=hd0 \
+-device edu
+```
+
+执行lspci，发现edu设备已经成功启动。
+```shell
+# lspci
+00:01.0 Class 00ff: 1234:11e8
+00:00.0 Class 0600: 1b36:0008
+```
 
 
 将内核驱动放入文件系统可以在两个阶段完成，分别是buildroot make之前和之后，之前就对应着向buildroot package中添加相关信息，随后一次烧制，方法如下：
 https://buildroot.org/downloads/manual/manual.html#_infrastructure_for_packages_building_kernel_modules
 
-也可以使用更加方便的交叉编译方法。
-
-运行脚本./run_aarch64.sh
-
+也可以使用更加方便的交叉编译方法。首先找到buildroot中的linux内核源码。在lab1 中我们确定了版本号为5.10.7：
 ```shell
-# lspci
-00:01.0 Class 00ff: 1234:11e8
-00:00.0 Class 0600: 1b36:0008
-# insmod hello.ko 
- book name:dissecting Linux Device Driver
- book num:4000
+# uname -a
+Linux buildroot 5.10.7 #1 SMP Wed Aug 18 17:55:00 CST 2021 aarch64 GNU/Linux
 ```
 
+随后在buildroot中进行查找：
+```shell
+find ~/eslab/buildroot-edu/ -name linux-5.10.7 -type d
+/home/fhn/eslab/buildroot-edu/output/build/linux-5.10.7
+```
+
+并将上述设为LINUX_KERNEL_DIR变量，方便说明。
+
+在$LINUX_KERNEL_DIR/drivers/char/中添加hello.c作为测试驱动。随后回到LINUX_KERNEL_DIR执行交叉编译：
+
+```shell
+sudo make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules
+```
+
+而后将得到的内核模块复制到挂载的文件系统下：
+```shell
+mkdir rootfs
+sudo su
+mount $BUILDROOT_DIR/output/images/rootfs.ext4 $ESLAB/rootfs
+cp $LINUX_KERNEL_DIR/drivers/char/hello.ko $ESLAB/rootfs/root
+umount $ESLAB/rootfs
+```
+
+启动qemu之后，执行`insmod hello.ko`，即可看到其输出的KERN INFO信息。
+
+我们重复上述方法，编写$LINUX_KERNEL_DIR/drivers/pci/edu.c驱动程序。重新交叉编译并链接。
+
+文件系统也随即完成制作。
+
+随后运行eslab目录下的脚本`./run_aarch64.sh`，即可看到读出的版本号为10000ed。
 
 
 注意，mmio的前80个字节只能以4 byte为单位读入，比如读取版本号时，不能读取逐个byte读取。
