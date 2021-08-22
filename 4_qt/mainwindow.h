@@ -44,12 +44,13 @@ private:
 private slots:
     void chessOneByPerson(); // 人执行
     void chessOneByAI(); // AI下棋
+    void chessOneOL();
 
     void initPVPGame();
     void initPVEGame();
     void initPVPGameOL();
 
-    void sendMessage();
+    void sendMessage(QString);
     void acceptConnection();
     void receiveData();
     void showError(QAbstractSocket::SocketError);

@@ -14,7 +14,7 @@
 #include <QInputDialog>
 
 
-// -------全局遍历-------//
+// -------全局变量-------//
 // #define CHESS_ONE_SOUND ":/res/sound/chessone.wav"
 // #define WIN_SOUND ":/res/sound/win.wav"
 // #define LOSE_SOUND ":/res/sound/lose.wav"
@@ -108,7 +108,7 @@ void MainWindow::initPVPGameOL()
         socket.connection->connectToHost(QHostAddress(text), 6665);
         connect(socket.connection, SIGNAL(readyRead()), this, SLOT(receiveData()));
         qDebug("client connected with %s", text.toStdString().data());
-//        socket.connection->write("test");
+        game->cur = false;
     }
     else if (text.isEmpty())
     {
@@ -121,33 +121,40 @@ void MainWindow::initPVPGameOL()
             qDebug() << socket.server->errorString();
             socket.server->close();
         }
-        qDebug() << "listenTest";
+        qDebug() << "server listening";
         connect(socket.server, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
         connect(socket.connection, SIGNAL(error(QAbstractSocket::SocketError)),SLOT(showError(QAbstractSocket::SocketError)));
+        game->cur = true;
     }
-    qDebug("finish");
+//    qDebug("connection test finished");
     game->gameStatus = PLAYING;
     game->startGame(game_type);
-//    connect(mouseReleaseEvent, SIGNAL(), this, SLOT(sendMessage()));
     update();
 }
 
-void MainWindow::sendMessage()
+void MainWindow::sendMessage(QString msg)
 {
-    socket.connection->write("test");
+    socket.connection->write(msg.toStdString().data());
 }
 void MainWindow::acceptConnection()
 {
     socket.connection = socket.server->nextPendingConnection();
-    sendMessage();
     connect(socket.connection, SIGNAL(readyRead()), this, SLOT(receiveData()));
     qDebug() << "server connected";
     socket.server->close();
 }
 void MainWindow::receiveData()
 {
-    QString str = socket.connection->readAll();
-    qDebug(str.toStdString().data());
+    QString msg = socket.connection->readAll();
+    qDebug(msg.toStdString().data());
+    if (msg.mid(0,5) == "[pos]")
+    {
+        qDebug() << "He prepares to commit";
+        int rowOL = int(msg[5].toLatin1()-'A'), colOL = int(msg[6].toLatin1()-'A');
+        game->actionByPerson(rowOL, colOL);
+        update();
+        qDebug() << "He commits" << rowOL << ' ' << colOL;
+    }
 }
 void MainWindow::showError(QAbstractSocket::SocketError)
 {
@@ -301,18 +308,16 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 {
+    if (game_type == PERSON)
+        chessOneByPerson();
     // 人下棋，并且不能抢机器的棋
-    if (!(game_type == BOT && !game->playerFlag))
+    if (game_type == BOT)
     {
         chessOneByPerson();
-        // 如果是人机模式，需要调用AI下棋
-        if (game->gameType == BOT && !game->playerFlag)
-        {
-            // 用定时器做一个延迟
-            QTimer::singleShot(kAIDelay, this, SLOT(chessOneByAI()));
-        }
+        QTimer::singleShot(kAIDelay, this, SLOT(chessOneByAI()));
     }
-    sendMessage();
+    if (game_type == PVPOL)
+        chessOneOL();
 }
 
 void MainWindow::chessOneByPerson()
@@ -335,3 +340,23 @@ void MainWindow::chessOneByAI()
     // QSound::play(CHESS_ONE_SOUND);
     update();
 }
+
+void MainWindow::chessOneOL()
+{
+    qDebug() << "I prepare to commit:" << game->cur;
+    if (game->playerFlag == game->cur)
+    {
+        qDebug() << "prepare game->cur = " << game->cur;
+        if (clickPosCol != -1 && clickPosRow != -1)
+        {
+            qDebug() << "I commit" << clickPosRow << ' ' <<clickPosCol;
+            game->actionByPerson(clickPosRow,clickPosCol);
+            update();
+            QString Pos = "[pos]";
+            Pos += char('A'+clickPosRow);
+            Pos += char('A'+clickPosCol);
+            sendMessage(Pos);
+        }
+    }
+}
+

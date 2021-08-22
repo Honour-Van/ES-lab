@@ -34,6 +34,7 @@ public:
     bool playerFlag; // 标示下棋方
     GameType gameType; // 游戏模式
     GameStatus gameStatus; // 游戏状态
+    bool cur;
 
     void startGame(GameType type); // 开始游戏
     void calculateScore(); // 计算评分
