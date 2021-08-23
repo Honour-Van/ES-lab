@@ -39,6 +39,7 @@ private:
     MainWindow *parent_window;
 signals:
     void updateTime(bool);
+    void timeIsUp(int);
 //private slots:
 //    void updateTimeSlot();
 };
@@ -51,6 +52,7 @@ public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
     struct CSStruct socket;
+    GameType getGameType() { return game->gameType;}
 
 protected:
     // 绘制
@@ -73,6 +75,7 @@ private slots:
     void chessOneByPerson(); // 人执行
     void chessOneByAI(); // AI下棋
     void chessOneOL();
+    void chessOne(int);
 
     void initPVPGame();
     void initPVEGame();

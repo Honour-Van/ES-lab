@@ -5,6 +5,7 @@
 #include <QDebug>
 GameModel::GameModel()
 {
+
 }
 
 void GameModel::startGame(GameType type)
@@ -12,7 +13,7 @@ void GameModel::startGame(GameType type)
     gameType = type;
     // 初始棋盘
     gameMapVec.clear();
-    //    gameMapVec.resize(kBoardSizeNum);
+//    gameMapVec.resize(kBoardSizeNum);
     for (int i = 0; i < kBoardSizeNum; i++)
     {
         std::vector<int> lineBoard;
@@ -35,6 +36,8 @@ void GameModel::startGame(GameType type)
 
     // 己方下为true,对方下位false
     playerFlag = true;
+
+
 }
 
 void GameModel::updateGameMap(int row, int col)
@@ -53,7 +56,7 @@ void GameModel::actionByPerson(int row, int col)
     updateGameMap(row, col);
 }
 
-void GameModel::actionByAI(int &clickRow, int &clickCol)
+void GameModel::calculateByAI(int &clickRow, int &clickCol)
 {
     // 计算评分
     calculateScore();
@@ -68,13 +71,13 @@ void GameModel::actionByAI(int &clickRow, int &clickCol)
             // 前提是这个坐标是空的
             if (gameMapVec[row][col] == 0)
             {
-                if (scoreMapVec[row][col] > maxScore) // 找最大的数和坐标
+                if (scoreMapVec[row][col] > maxScore)          // 找最大的数和坐标
                 {
                     maxPoints.clear();
                     maxScore = scoreMapVec[row][col];
                     maxPoints.push_back(std::make_pair(row, col));
                 }
-                else if (scoreMapVec[row][col] == maxScore) // 如果有多个最大的数，都存起来
+                else if (scoreMapVec[row][col] == maxScore)     // 如果有多个最大的数，都存起来
                     maxPoints.push_back(std::make_pair(row, col));
             }
         }
@@ -86,6 +89,11 @@ void GameModel::actionByAI(int &clickRow, int &clickCol)
     std::pair<int, int> pointPair = maxPoints.at(index);
     clickRow = pointPair.first; // 记录落子点
     clickCol = pointPair.second;
+}
+
+void GameModel::actionByAI(int &clickRow, int &clickCol)
+{
+    calculateByAI(clickRow, clickCol);
     updateGameMap(clickRow, clickCol);
 }
 
@@ -94,8 +102,8 @@ void GameModel::calculateScore()
 {
     // 统计玩家或者电脑连成的子
     int personNum = 0; // 玩家连成子的个数
-    int botNum = 0;    // AI连成子的个数
-    int emptyNum = 0;  // 各方向空白位的个数
+    int botNum = 0; // AI连成子的个数
+    int emptyNum = 0; // 各方向空白位的个数
 
     // 清空评分数组
     scoreMapVec.clear();
@@ -145,7 +153,7 @@ void GameModel::calculateScore()
                                     emptyNum++;
                                     break;
                                 }
-                                else // 出边界
+                                else            // 出边界
                                     break;
                             }
 
@@ -164,20 +172,20 @@ void GameModel::calculateScore()
                                     emptyNum++;
                                     break;
                                 }
-                                else // 出边界
+                                else            // 出边界
                                     break;
                             }
 
-                            if (personNum == 1) // 杀二
+                            if (personNum == 1)                      // 杀二
                                 scoreMapVec[row][col] += 10;
-                            else if (personNum == 2) // 杀三
+                            else if (personNum == 2)                 // 杀三
                             {
                                 if (emptyNum == 1)
                                     scoreMapVec[row][col] += 30;
                                 else if (emptyNum == 2)
                                     scoreMapVec[row][col] += 40;
                             }
-                            else if (personNum == 3) // 杀四
+                            else if (personNum == 3)                 // 杀四
                             {
                                 // 量变空位不一样，优先级不一样
                                 if (emptyNum == 1)
@@ -185,7 +193,7 @@ void GameModel::calculateScore()
                                 else if (emptyNum == 2)
                                     scoreMapVec[row][col] += 110;
                             }
-                            else if (personNum == 4) // 杀五
+                            else if (personNum == 4)                 // 杀五
                                 scoreMapVec[row][col] += 10100;
 
                             // 进行一次清空
@@ -202,12 +210,12 @@ void GameModel::calculateScore()
                                 }
                                 else if (row + i * y > 0 && row + i * y < kBoardSizeNum &&
                                          col + i * x > 0 && col + i * x < kBoardSizeNum &&
-                                         gameMapVec[row + i * y][col + i * x] == 0) // 空白位
+                                         gameMapVec[row +i * y][col + i * x] == 0) // 空白位
                                 {
                                     emptyNum++;
                                     break;
                                 }
-                                else // 出边界
+                                else            // 出边界
                                     break;
                             }
 
@@ -226,32 +234,34 @@ void GameModel::calculateScore()
                                     emptyNum++;
                                     break;
                                 }
-                                else // 出边界
+                                else            // 出边界
                                     break;
                             }
 
-                            if (botNum == 0) // 普通下子
+                            if (botNum == 0)                      // 普通下子
                                 scoreMapVec[row][col] += 5;
-                            else if (botNum == 1) // 活二
+                            else if (botNum == 1)                 // 活二
                                 scoreMapVec[row][col] += 10;
                             else if (botNum == 2)
                             {
-                                if (emptyNum == 1) // 死三
+                                if (emptyNum == 1)                // 死三
                                     scoreMapVec[row][col] += 25;
                                 else if (emptyNum == 2)
-                                    scoreMapVec[row][col] += 50; // 活三
+                                    scoreMapVec[row][col] += 50;  // 活三
                             }
                             else if (botNum == 3)
                             {
-                                if (emptyNum == 1) // 死四
+                                if (emptyNum == 1)                // 死四
                                     scoreMapVec[row][col] += 55;
                                 else if (emptyNum == 2)
                                     scoreMapVec[row][col] += 100; // 活四
                             }
                             else if (botNum >= 4)
-                                scoreMapVec[row][col] += 10000; // 活五
+                                scoreMapVec[row][col] += 10000;   // 活五
+
                         }
                     }
+
             }
         }
 }

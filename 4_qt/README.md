@@ -89,5 +89,6 @@ lab4 编写 QT 图形界面程序
 6. 添加状态菜单，包括
    1. 文字的使用和自定义https://blog.csdn.net/zhizhengguan/article/details/113384032
    2. 时间变量的使用
-   3. Qt多线程和connect-signal-slot机制：https://blog.csdn.net/t46414704152abc/article/details/52133377 https://blog.csdn.net/humanking7/article/details/86071134
-7. 
+7. Qt多线程和connect-signal-slot机制：https://blog.csdn.net/t46414704152abc/article/details/52133377 https://blog.csdn.net/humanking7/article/details/86071134
+8. 注意不要有中文路径
+9. 野指针的报错是SogouInput/components，是一个很奇怪的依赖项了。

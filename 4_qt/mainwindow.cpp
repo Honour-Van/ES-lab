@@ -77,9 +77,18 @@ void MainWindow::initGame()
     // 初始化游戏模型
     game = new GameModel;
     connect(timer, SIGNAL(updateTime(bool)), this, SLOT(update()), Qt::QueuedConnection);
+    connect(timer, SIGNAL(timeIsUp(int)), this, SLOT(chessOne(int)), Qt::QueuedConnection);
     timer->start();
     initPVPGame();
 }
+void MainWindow::chessOne(int a)
+{
+    if (a == 1)
+        chessOneByAI();
+    else if (a == 2)
+        chessOneOL();
+}
+
 
 void MainWindow::initPVPGame()
 {
@@ -174,26 +183,26 @@ void MainWindow::showError(QAbstractSocket::SocketError)
 }
 TimeUpdater::TimeUpdater(MainWindow *mp):
     time_left(kTotalTime),
-    last_time(QTime::currentTime())
-//    parent_window(mp)
+    last_time(QTime::currentTime()),
+    parent_window(mp) //给出一个timeisup的统一接口时的失败尝试就是因为注释掉了这一句
 { }
 
 void TimeUpdater::run()
 {
     while (true) {
-        if (!reset_lock)
+        int newTmp = last_time.secsTo(QTime::currentTime());
+        if (delta < newTmp)
         {
-            int newTmp = last_time.secsTo(QTime::currentTime());
-            if (delta < newTmp)
-            {
-                delta = newTmp;
-                time_left = kTotalTime - delta;
-                emit updateTime(true);
-            }
+            delta = newTmp;
+            time_left = kTotalTime - delta;
+            emit updateTime(true);
         }
         if (time_left <= 0)
         {
-            ;
+            Reset();
+            if (parent_window->getGameType() != PVPOL)
+                emit timeIsUp(1);
+            else emit timeIsUp(2);
         }
     }
 }
@@ -446,7 +455,9 @@ void MainWindow::chessOneOL()
 //    qDebug() << "I prepare to commit:" << game->cur;
     if (game->playerFlag == game->cur)
     {
-        if (clickPosCol != -1 && clickPosRow != -1)
+        if (timer->timeLeft() <= 0)
+            game->calculateByAI(clickPosRow, clickPosCol);
+        if (clickPosCol != -1 && clickPosRow != -1 && game->gameMapVec[clickPosRow][clickPosCol] == 0)
         {
             qDebug() << "[send] " << clickPosRow << ' ' <<clickPosCol;
             game->actionByPerson(clickPosRow,clickPosCol);
