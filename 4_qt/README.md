@@ -63,3 +63,31 @@ lab4 编写 QT 图形界面程序
 实现过程中遇到的问题：
 1. server可以接收到，client不能。（考虑到我们将client和server集成在一起，按照实际情景实例化，不太熟悉的API和分支一起使用时，要看看这些分支的逻辑是否完备。多加debug语句，有助于我们理解陌生语言和环境）
 2. 由于直接加入了mouseReleaseEvent中，如果某次没有点到有效位置，也会产生sendMessage调用，在接下来的位置传输时要注意。
+3. 源码中给出的实现思路无法重新开盘
+   1. 本来以为和二维vector的清除有关，如这篇文章中所述https://blog.csdn.net/stephen___qin/article/details/71024160
+   2. 猜想是segmentation fault，但是由于qt的多线程循环的结构，调试起来非常不方便。并没有找到错误所在。
+   3. debug不能正常启动的原因猜测和代码本身无关。segFault出现在系统库文件中：
+   ```cpp
+      0x7ffadfb468f0                  cc                       int3
+   -> 0x7ffadfb468f1  <+    1>        c3                       retq
+      0x7ffadfb468f2  <+    2>        cc                       int3
+      0x7ffadfb468f3  <+    3>        cc                       int3
+      0x7ffadfb468f4  <+    4>        cc                       int3
+      0x7ffadfb468f5  <+    5>        cc                       int3
+      0x7ffadfb468f6  <+    6>        cc                       int3
+      0x7ffadfb468f7  <+    7>        cc                       int3
+      0x7ffadfb468f8  <+    8>        0f 1f 84 00 00 00 00 00  nopl   0x0(%rax,%rax,1)
+   ```
+   怀疑同版本有关。
+4. 资源的prefix管理有一点问题。做了一定的调整，并增加了棋盘背景、棋子等资源。
+5. 添加了图片：
+   ```cpp
+    QPixmap pix;   
+    pix.load(":/res/board1.jpg");
+    painter->drawPixmap(kBoardMargin, kBoardMargin, kBlockSize * kBoardSizeNum, kBlockSize * kBoardSizeNum, pix);
+   ```
+6. 添加状态菜单，包括
+   1. 文字的使用和自定义https://blog.csdn.net/zhizhengguan/article/details/113384032
+   2. 时间变量的使用
+   3. Qt多线程和connect-signal-slot机制：https://blog.csdn.net/t46414704152abc/article/details/52133377 https://blog.csdn.net/humanking7/article/details/86071134
+7. 

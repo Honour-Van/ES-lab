@@ -3,7 +3,7 @@
 
 // ---- 五子棋游戏模型类 ---- //
 #include <vector>
-
+#include <QDebug>
 // 游戏类型，双人还是AI（目前固定让AI下黑子）
 enum GameType
 {
@@ -21,12 +21,13 @@ enum GameStatus
 };
 
 // 棋盘尺寸
-const int kBoardSizeNum = 15;
+const int kBoardSizeNum = 14;
 
 class GameModel
 {
 public:
     GameModel();
+    ~GameModel(){};
 
 public:
     std::vector<std::vector<int>> gameMapVec; // 存储当前游戏棋盘和棋子的情况,空白为0，白子1，黑子-1
