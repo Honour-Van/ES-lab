@@ -1,0 +1,3 @@
+[submodule "4_qt/QtWuziqi"]
+	path = 4_qt/QtWuziqi
+	url = git@github.com:Honour-Van/QtWuziqi.git
